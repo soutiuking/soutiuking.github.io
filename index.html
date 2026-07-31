@@ -837,84 +837,6 @@
     <p>从竞赛实战中沉淀，整理为可复现、可修改、可继续发展的开源工程。</p>
   </div>
   <div class="projects-grid" id="github-projects">
-    <div class="project-card">
-      <div class="project-type">Hardware Module</div>
-      <h3>多通道精密采集板</h3>
-      <p>基于 STM32H7 的高精度多通道模拟采集模块，支持 24-bit ADC，适用于传感器信号调理与工业测量场景。</p>
-      <div class="project-tags">
-        <span>STM32H7</span><span>ADC</span><span>PCB</span><span>Altium</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 234</span>
-        <span>Fork 56</span>
-        <span>2024.11</span>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="project-type">Competition</div>
-      <h3>智能送药小车系统</h3>
-      <p>全国大学生电子设计竞赛获奖作品。基于视觉识别与路径规划的自主导航送药系统，含完整硬件设计与控制算法。</p>
-      <div class="project-tags">
-        <span>OpenMV</span><span>FreeRTOS</span><span>PID</span><span>国赛</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 489</span>
-        <span>Fork 128</span>
-        <span>2024.08</span>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="project-type">Tool & Library</div>
-      <h3>JZ-RTOS 调试框架</h3>
-      <p>轻量级嵌入式实时系统调试工具，支持 Trace 可视化、栈使用分析与运行时统计，适配主流 RTOS 平台。</p>
-      <div class="project-tags">
-        <span>调试</span><span>Trace</span><span>RTOS</span><span>CLI</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 167</span>
-        <span>Fork 34</span>
-        <span>2024.05</span>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="project-type">Reference Design</div>
-      <h3>电源模块设计集</h3>
-      <p>涵盖 LDO、Buck、Boost、充电管理等常用电源拓扑的参考设计，每款均经过打样验证与效率测试。</p>
-      <div class="project-tags">
-        <span>电源</span><span>DCDC</span><span>充电</span><span>效率</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 312</span>
-        <span>Fork 89</span>
-        <span>2024.03</span>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="project-type">Firmware</div>
-      <h3>通用 Bootloader 方案</h3>
-      <p>支持 UART / CAN / USB 多种接口的固件升级方案，含加密签名、断点续传与回滚保护机制。</p>
-      <div class="project-tags">
-        <span>OTA</span><span>CAN</span><span>加密</span><span>STM32</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 198</span>
-        <span>Fork 67</span>
-        <span>2024.01</span>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="project-type">Documentation</div>
-      <h3>从零学嵌入式路线</h3>
-      <p>面向新手的嵌入式系统学习路线文档，涵盖电路基础、C 语言、单片机、RTOS 到 Linux 驱动的完整路径。</p>
-      <div class="project-tags">
-        <span>教程</span><span>新手</span><span>路线图</span><span>文档</span>
-      </div>
-      <div class="project-meta">
-        <span>★ 1.2k</span>
-        <span>Fork 340</span>
-        <span>2023.09</span>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1157,6 +1079,17 @@
       .slice(0, githubConfig.maxRepos);
   };
 
+  const getConfiguredRepos = () => githubConfig.featuredRepos
+    .slice(0, githubConfig.maxRepos)
+    .map(name => ({
+      name,
+      html_url: `https://github.com/${githubConfig.owner}/${name}`,
+      description: '查看项目源码、文档与最新进展。',
+      language: 'GitHub Repository',
+      topics: [],
+      isFallback: true
+    }));
+
   const buildProjectCard = repo => {
     const tags = [repo.language, ...(repo.topics || [])]
       .filter(Boolean)
@@ -1165,6 +1098,13 @@
       .map(tag => `<span>${escapeHtml(tag)}</span>`)
       .join('');
     const description = repo.description || '开源项目持续整理中，欢迎查看源码、文档与最新进展。';
+    const meta = repo.isFallback
+      ? '<span>打开 GitHub 仓库 →</span>'
+      : `
+          <span>★ ${formatNumber(repo.stargazers_count || 0)}</span>
+          <span>Fork ${formatNumber(repo.forks_count || 0)}</span>
+          <span>${formatMonth(repo.pushed_at || repo.updated_at)}</span>
+        `;
 
     return `
       <a class="project-card" href="${escapeHtml(repo.html_url)}" target="_blank" rel="noreferrer">
@@ -1173,9 +1113,7 @@
         <p>${escapeHtml(description)}</p>
         <div class="project-tags">${tagMarkup}</div>
         <div class="project-meta">
-          <span>★ ${formatNumber(repo.stargazers_count || 0)}</span>
-          <span>Fork ${formatNumber(repo.forks_count || 0)}</span>
-          <span>${formatMonth(repo.pushed_at || repo.updated_at)}</span>
+          ${meta}
         </div>
       </a>
     `;
@@ -1210,11 +1148,15 @@
   const loadGithubRepositories = async () => {
     if (!isGithubConfigured) return;
 
+    const grid = document.getElementById('github-projects');
+    const configuredRepos = getConfiguredRepos();
+    grid.innerHTML = configuredRepos.map(buildProjectCard).join('');
+    observeRevealElements(grid);
+
     try {
       const repos = await fetchPublicRepos(githubConfig.owner);
       const visibleRepos = getVisibleRepos(repos);
       if (visibleRepos.length) {
-        const grid = document.getElementById('github-projects');
         grid.innerHTML = visibleRepos.map(buildProjectCard).join('');
         observeRevealElements(grid);
       }
