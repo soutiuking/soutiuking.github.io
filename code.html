@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>霁泽入微 — 开源嵌入式工作室</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@300;400;600;700&family=DM+Mono:ital,wght@0,300;0,400;1,300&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+  *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+  :root{
+    --bg:#0a0b0d;
+    --bg-deep:#060709;
+    --surface:#111318;
+    --surface-raised:#181b22;
+    --copper:#c8956c;
+    --copper-bright:#e4aa78;
+    --copper-dim:#8a6244;
+    --gold:#d4b483;
+    --solder:#a3c4a3;
+    --solder-dim:#5a7a5a;
+    --text-ghost:#2a2d35;
+    --text-dim:#4a4d56;
+    --text-muted:#6e7280;
+    --text-secondary:#9499a6;
+    --text-primary:#d8dbe4;
+    --text-bright:#f0f1f4;
+    --trace:rgba(200,149,108,0.07);
+    --trace-bright:rgba(200,149,108,0.15);
+    --serif:'Noto Serif SC','Songti SC',serif;
+    --mono:'DM Mono','Menlo',monospace;
+    --display:'Instrument Serif','Noto Serif SC',serif;
+  }
+
+  html{scroll-behavior:smooth;font-size:16px}
+  body{
+    background:var(--bg);
+    color:var(--text-primary);
+    font-family:var(--serif);
+    line-height:1.7;
+    overflow-x:hidden;
+    -webkit-font-smoothing:antialiased;
+  }
+
+  /* ── PCB Trace Background ── */
+  body::before{
+    content:'';
+    position:fixed;inset:0;
+    z-index:0;
+    pointer-events:none;
+    opacity:1;
+    background-image:
+      linear-gradient(var(--trace) 1px,transparent 1px),
+      linear-gradient(90deg,var(--trace) 1px,transparent 1px),
+      linear-gradient(var(--trace-bright) 1px,transparent 1px),
+      linear-gradient(90deg,var(--trace-bright) 1px,transparent 1px);
+    background-size:
+      80px 80px,
+      80px 80px,
+      16px 16px,
+      16px 16px;
+    mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,black 20%,transparent 70%);
+    -webkit-mask-image:radial-gradient(ellipse 70% 60% at 50% 40%,black 20%,transparent 70%);
+  }
+
+  /* ── Grain overlay ── */
+  body::after{
+    content:'';
+    position:fixed;inset:0;
+    z-index:9999;
+    pointer-events:none;
+    opacity:0.025;
+    background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  }
+
+  .container{
+    max-width:1200px;
+    margin:0 auto;
+    padding:0 clamp(1.5rem,4vw,3rem);
+    position:relative;
+    z-index:1;
+  }
+
+  /* ═══════════════════════════════
+     NAV
+     ═══════════════════════════════ */
+  nav{
+    position:fixed;top:0;left:0;right:0;
+    z-index:100;
+    padding:1.2rem 0;
+    background:linear-gradient(180deg,rgba(10,11,13,0.95) 0%,rgba(10,11,13,0) 100%);
+    backdrop-filter:blur(12px);
+    -webkit-backdrop-filter:blur(12px);
+    transition:background 0.4s;
+  }
+  nav .container{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .nav-logo{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:1.1rem;
+    color:var(--copper);
+    letter-spacing:0.08em;
+    text-decoration:none;
+  }
+  .nav-logo span{
+    font-weight:300;
+    color:var(--text-muted);
+    font-size:0.75rem;
+    margin-left:0.6rem;
+    letter-spacing:0.15em;
+    font-family:var(--mono);
+    text-transform:uppercase;
+  }
+  .nav-links{display:flex;gap:2rem;align-items:center}
+  .nav-links a{
+    color:var(--text-secondary);
+    text-decoration:none;
+    font-size:0.82rem;
+    font-family:var(--mono);
+    letter-spacing:0.06em;
+    transition:color 0.3s;
+    position:relative;
+  }
+  .nav-links a::after{
+    content:'';
+    position:absolute;
+    bottom:-3px;left:0;
+    width:0;height:1px;
+    background:var(--copper);
+    transition:width 0.3s ease;
+  }
+  .nav-links a:hover{color:var(--copper-bright)}
+  .nav-links a:hover::after{width:100%}
+
+  /* ═══════════════════════════════
+     HERO
+     ═══════════════════════════════ */
+  .hero{
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    position:relative;
+    padding:6rem 0 4rem;
+  }
+
+  /* decorative circuit node */
+  .hero-circuit{
+    position:absolute;
+    width:200px;height:200px;
+    top:15%;right:8%;
+    opacity:0;
+    animation:fadeIn 1.5s ease 1.2s forwards;
+  }
+  .hero-circuit svg{width:100%;height:100%}
+
+  .hero-tag{
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:var(--copper);
+    letter-spacing:0.25em;
+    text-transform:uppercase;
+    margin-bottom:2rem;
+    opacity:0;
+    animation:fadeUp 0.8s ease 0.3s forwards;
+  }
+  .hero-tag::before{
+    content:'';
+    display:inline-block;
+    width:2rem;height:1px;
+    background:var(--copper-dim);
+    vertical-align:middle;
+    margin-right:1rem;
+  }
+
+  .hero-title{
+    font-family:var(--serif);
+    font-weight:700;
+    font-size:clamp(3.5rem,8vw,7rem);
+    line-height:1.05;
+    color:var(--text-bright);
+    margin-bottom:0.3em;
+    opacity:0;
+    animation:fadeUp 1s ease 0.5s forwards;
+  }
+  .hero-title .char-copper{
+    color:var(--copper);
+    position:relative;
+  }
+  .hero-title .char-copper::after{
+    content:'';
+    position:absolute;
+    bottom:0.08em;left:0;right:0;
+    height:2px;
+    background:linear-gradient(90deg,var(--copper),transparent);
+    opacity:0.4;
+  }
+
+  .hero-sub{
+    font-family:var(--serif);
+    font-weight:300;
+    font-size:clamp(1rem,2vw,1.35rem);
+    color:var(--text-secondary);
+    max-width:600px;
+    line-height:1.9;
+    margin-bottom:3rem;
+    opacity:0;
+    animation:fadeUp 1s ease 0.7s forwards;
+  }
+
+  .hero-sub em{
+    font-style:normal;
+    color:var(--gold);
+    font-weight:400;
+  }
+
+  .hero-cta-group{
+    display:flex;gap:1.2rem;flex-wrap:wrap;
+    opacity:0;
+    animation:fadeUp 1s ease 0.9s forwards;
+  }
+
+  .btn{
+    display:inline-flex;align-items:center;gap:0.5rem;
+    padding:0.75rem 2rem;
+    font-family:var(--mono);
+    font-size:0.78rem;
+    letter-spacing:0.1em;
+    text-decoration:none;
+    border:none;cursor:pointer;
+    transition:all 0.35s ease;
+    position:relative;
+    overflow:hidden;
+  }
+  .btn-primary{
+    background:var(--copper);
+    color:var(--bg);
+  }
+  .btn-primary:hover{
+    background:var(--copper-bright);
+    letter-spacing:0.14em;
+    box-shadow:0 0 30px rgba(200,149,108,0.2);
+  }
+  .btn-outline{
+    background:transparent;
+    color:var(--text-secondary);
+    border:1px solid var(--text-ghost);
+  }
+  .btn-outline:hover{
+    border-color:var(--copper-dim);
+    color:var(--copper);
+  }
+
+  /* scroll hint */
+  .scroll-hint{
+    position:absolute;
+    bottom:2.5rem;left:50%;
+    transform:translateX(-50%);
+    display:flex;flex-direction:column;align-items:center;gap:0.5rem;
+    opacity:0;
+    animation:fadeIn 1s ease 1.5s forwards;
+  }
+  .scroll-hint span{
+    font-family:var(--mono);
+    font-size:0.65rem;
+    color:var(--text-dim);
+    letter-spacing:0.2em;
+    text-transform:uppercase;
+  }
+  .scroll-line{
+    width:1px;height:40px;
+    background:linear-gradient(180deg,var(--copper-dim),transparent);
+    animation:scrollPulse 2s ease infinite;
+  }
+
+  /* ═══════════════════════════════
+     SECTION DIVIDER
+     ═══════════════════════════════ */
+  .section-divider{
+    display:flex;align-items:center;gap:1.5rem;
+    margin:6rem 0 3rem;
+  }
+  .section-divider::before,
+  .section-divider::after{
+    content:'';flex:1;height:1px;
+    background:linear-gradient(90deg,transparent,var(--text-ghost),transparent);
+  }
+  .section-num{
+    font-family:var(--mono);
+    font-size:0.7rem;
+    color:var(--copper-dim);
+    letter-spacing:0.2em;
+  }
+
+  /* ═══════════════════════════════
+     PROJECTS
+     ═══════════════════════════════ */
+  .section-header{
+    margin-bottom:3.5rem;
+  }
+  .section-header h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(1.8rem,3.5vw,2.8rem);
+    color:var(--text-bright);
+    margin-bottom:0.6rem;
+  }
+  .section-header p{
+    font-family:var(--mono);
+    font-size:0.78rem;
+    color:var(--text-muted);
+    letter-spacing:0.05em;
+    max-width:500px;
+  }
+
+  .projects-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(340px,1fr));
+    gap:1.5rem;
+  }
+
+  .project-card{
+    background:var(--surface);
+    border:1px solid var(--text-ghost);
+    padding:2rem;
+    position:relative;
+    transition:all 0.4s ease;
+    cursor:pointer;
+    opacity:0;
+    transform:translateY(20px);
+  }
+  .project-card.visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+  .project-card:hover{
+    border-color:var(--copper-dim);
+    background:var(--surface-raised);
+    transform:translateY(-4px);
+    box-shadow:0 20px 60px rgba(0,0,0,0.3),0 0 0 1px var(--copper-dim);
+  }
+
+  /* corner accent — like PCB pad */
+  .project-card::before{
+    content:'';
+    position:absolute;
+    top:0;left:0;
+    width:6px;height:6px;
+    border:1px solid var(--copper-dim);
+    background:var(--bg);
+    transition:background 0.3s;
+  }
+  .project-card:hover::before{
+    background:var(--copper);
+    box-shadow:0 0 8px rgba(200,149,108,0.4);
+  }
+  .project-card::after{
+    content:'';
+    position:absolute;
+    bottom:0;right:0;
+    width:6px;height:6px;
+    border:1px solid var(--copper-dim);
+    background:var(--bg);
+    transition:background 0.3s;
+  }
+  .project-card:hover::after{
+    background:var(--copper);
+    box-shadow:0 0 8px rgba(200,149,108,0.4);
+  }
+
+  .project-type{
+    font-family:var(--mono);
+    font-size:0.65rem;
+    color:var(--solder);
+    letter-spacing:0.15em;
+    text-transform:uppercase;
+    margin-bottom:1rem;
+    display:flex;align-items:center;gap:0.5rem;
+  }
+  .project-type::before{
+    content:'';display:block;
+    width:8px;height:8px;
+    border-radius:50%;
+    background:var(--solder-dim);
+    box-shadow:0 0 6px rgba(163,196,163,0.3);
+    animation:pulse 2s ease infinite;
+  }
+
+  .project-card h3{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.25rem;
+    color:var(--text-bright);
+    margin-bottom:0.7rem;
+    transition:color 0.3s;
+  }
+  .project-card:hover h3{color:var(--copper-bright)}
+
+  .project-card p{
+    font-size:0.88rem;
+    color:var(--text-muted);
+    line-height:1.7;
+    margin-bottom:1.2rem;
+  }
+
+  .project-tags{
+    display:flex;flex-wrap:wrap;gap:0.4rem;
+  }
+  .project-tags span{
+    font-family:var(--mono);
+    font-size:0.62rem;
+    color:var(--text-dim);
+    border:1px solid var(--text-ghost);
+    padding:0.2rem 0.6rem;
+    letter-spacing:0.05em;
+    transition:border-color 0.3s,color 0.3s;
+  }
+  .project-card:hover .project-tags span{
+    border-color:var(--copper-dim);
+    color:var(--copper-dim);
+  }
+
+  .project-meta{
+    display:flex;
+    align-items:center;
+    gap:1rem;
+    margin-top:1.2rem;
+    padding-top:1rem;
+    border-top:1px solid var(--text-ghost);
+  }
+  .project-meta span{
+    font-family:var(--mono);
+    font-size:0.65rem;
+    color:var(--text-dim);
+    display:flex;align-items:center;gap:0.3rem;
+  }
+
+  /* ═══════════════════════════════
+     PROCESS / PHILOSOPHY
+     ═══════════════════════════════ */
+  .process-section{
+    margin:4rem 0;
+  }
+
+  .process-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:1px;
+    background:var(--text-ghost);
+    border:1px solid var(--text-ghost);
+  }
+
+  .process-step{
+    background:var(--bg);
+    padding:2.5rem 2rem;
+    position:relative;
+    opacity:0;
+    transform:translateY(15px);
+    transition:all 0.5s ease;
+  }
+  .process-step.visible{
+    opacity:1;
+    transform:translateY(0);
+  }
+
+  .process-step:hover{background:var(--surface)}
+
+  .step-num{
+    font-family:var(--display);
+    font-style:italic;
+    font-size:2.5rem;
+    color:var(--copper-dim);
+    opacity:0.4;
+    line-height:1;
+    margin-bottom:1.2rem;
+    transition:opacity 0.3s;
+  }
+  .process-step:hover .step-num{opacity:0.8}
+
+  .step-title{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1.05rem;
+    color:var(--text-bright);
+    margin-bottom:0.6rem;
+  }
+  .step-desc{
+    font-size:0.82rem;
+    color:var(--text-muted);
+    line-height:1.7;
+  }
+
+  /* connector line between steps */
+  .process-step:not(:last-child)::after{
+    content:'→';
+    position:absolute;
+    right:-0.5rem;top:50%;
+    transform:translateY(-50%);
+    font-family:var(--mono);
+    font-size:0.8rem;
+    color:var(--copper-dim);
+    z-index:2;
+    opacity:0.5;
+  }
+
+  /* ═══════════════════════════════
+     STATS / TRUST BAR
+     ═══════════════════════════════ */
+  .stats-bar{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:2rem;
+    margin:5rem 0;
+    padding:3rem 0;
+    border-top:1px solid var(--text-ghost);
+    border-bottom:1px solid var(--text-ghost);
+  }
+  .stat-item{text-align:center}
+  .stat-value{
+    font-family:var(--display);
+    font-style:italic;
+    font-size:clamp(2rem,4vw,3rem);
+    color:var(--copper);
+    line-height:1;
+    margin-bottom:0.4rem;
+  }
+  .stat-label{
+    font-family:var(--mono);
+    font-size:0.7rem;
+    color:var(--text-dim);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+  }
+
+  /* ═══════════════════════════════
+     ABOUT / MANIFESTO
+     ═══════════════════════════════ */
+  .about-section{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:4rem;
+    margin:4rem 0;
+    align-items:start;
+  }
+
+  .about-text h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(1.6rem,3vw,2.4rem);
+    color:var(--text-bright);
+    margin-bottom:1.5rem;
+    line-height:1.3;
+  }
+
+  .about-text p{
+    font-size:0.92rem;
+    color:var(--text-secondary);
+    line-height:1.9;
+    margin-bottom:1.2rem;
+  }
+  .about-text p em{
+    font-style:normal;
+    color:var(--gold);
+  }
+
+  .about-quote{
+    background:var(--surface);
+    border-left:2px solid var(--copper-dim);
+    padding:2.5rem;
+    margin-top:2rem;
+  }
+  .about-quote blockquote{
+    font-family:var(--serif);
+    font-size:1.1rem;
+    color:var(--text-primary);
+    line-height:1.8;
+    font-weight:300;
+  }
+  .about-quote cite{
+    display:block;
+    margin-top:1rem;
+    font-family:var(--mono);
+    font-size:0.72rem;
+    color:var(--copper-dim);
+    font-style:normal;
+    letter-spacing:0.1em;
+  }
+
+  .about-values{display:flex;flex-direction:column;gap:1.5rem}
+  .value-item{
+    padding:1.5rem;
+    border:1px solid var(--text-ghost);
+    background:var(--surface);
+    transition:all 0.3s ease;
+  }
+  .value-item:hover{
+    border-color:var(--copper-dim);
+    background:var(--surface-raised);
+  }
+  .value-item h4{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:1rem;
+    color:var(--copper-bright);
+    margin-bottom:0.5rem;
+  }
+  .value-item p{
+    font-size:0.82rem;
+    color:var(--text-muted);
+    line-height:1.7;
+  }
+
+  /* ═══════════════════════════════
+     TECH STACK MARQUEE
+     ═══════════════════════════════ */
+  .marquee-section{
+    overflow:hidden;
+    padding:3rem 0;
+    border-top:1px solid var(--text-ghost);
+    border-bottom:1px solid var(--text-ghost);
+    margin:4rem 0;
+  }
+  .marquee-track{
+    display:flex;
+    gap:3rem;
+    animation:marquee 30s linear infinite;
+    width:max-content;
+  }
+  .marquee-item{
+    font-family:var(--mono);
+    font-size:0.75rem;
+    color:var(--text-dim);
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    white-space:nowrap;
+    display:flex;align-items:center;gap:0.6rem;
+  }
+  .marquee-item::before{
+    content:'◆';
+    color:var(--copper-dim);
+    font-size:0.5rem;
+  }
+
+  /* ═══════════════════════════════
+     CTA / CONTACT
+     ═══════════════════════════════ */
+  .cta-section{
+    text-align:center;
+    padding:6rem 0;
+  }
+  .cta-section h2{
+    font-family:var(--serif);
+    font-weight:600;
+    font-size:clamp(2rem,4vw,3.2rem);
+    color:var(--text-bright);
+    margin-bottom:1rem;
+  }
+  .cta-section p{
+    font-family:var(--mono);
+    font-size:0.82rem;
+    color:var(--text-muted);
+    letter-spacing:0.05em;
+    margin-bottom:2.5rem;
+    max-width:500px;
+    margin-left:auto;margin-right:auto;
+    line-height:1.8;
+  }
+  .cta-links{
+    display:flex;justify-content:center;gap:1.5rem;flex-wrap:wrap;
+  }
+
+  /* ═══════════════════════════════
+     FOOTER
+     ═══════════════════════════════ */
+  footer{
+    border-top:1px solid var(--text-ghost);
+    padding:3rem 0;
+  }
+  .footer-inner{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:1rem;
+  }
+  .footer-left{
+    font-family:var(--mono);
+    font-size:0.7rem;
+    color:var(--text-dim);
+    letter-spacing:0.06em;
+  }
+  .footer-right{
+    display:flex;gap:1.5rem;
+  }
+  .footer-right a{
+    font-family:var(--mono);
+    font-size:0.7rem;
+    color:var(--text-dim);
+    text-decoration:none;
+    letter-spacing:0.06em;
+    transition:color 0.3s;
+  }
+  .footer-right a:hover{color:var(--copper)}
+
+  /* ═══════════════════════════════
+     ANIMATIONS
+     ═══════════════════════════════ */
+  @keyframes fadeUp{
+    from{opacity:0;transform:translateY(25px)}
+    to{opacity:1;transform:translateY(0)}
+  }
+  @keyframes fadeIn{
+    from{opacity:0}
+    to{opacity:1}
+  }
+  @keyframes pulse{
+    0%,100%{opacity:0.5}
+    50%{opacity:1}
+  }
+  @keyframes scrollPulse{
+    0%{opacity:0;transform:scaleY(0);transform-origin:top}
+    50%{opacity:1;transform:scaleY(1);transform-origin:top}
+    100%{opacity:0;transform:scaleY(0);transform-origin:bottom}
+  }
+  @keyframes marquee{
+    from{transform:translateX(0)}
+    to{transform:translateX(-50%)}
+  }
+
+  /* ═══════════════════════════════
+     RESPONSIVE
+     ═══════════════════════════════ */
+  @media(max-width:900px){
+    .process-grid{grid-template-columns:repeat(2,1fr)}
+    .process-step:not(:last-child)::after{display:none}
+    .about-section{grid-template-columns:1fr;gap:2rem}
+    .stats-bar{grid-template-columns:repeat(2,1fr)}
+  }
+  @media(max-width:600px){
+    .process-grid{grid-template-columns:1fr}
+    .projects-grid{grid-template-columns:1fr}
+    .nav-links{display:none}
+    .hero-circuit{display:none}
+    .stats-bar{grid-template-columns:1fr 1fr;gap:1.5rem}
+    .hero-title{font-size:2.8rem}
+  }
+</style>
+</head>
+<body>
+
+<!-- ── NAV ── -->
+<nav>
+  <div class="container">
+    <a href="#" class="nav-logo">霁泽入微<span>studio</span></a>
+    <div class="nav-links">
+      <a href="#projects">项目</a>
+      <a href="#process">流程</a>
+      <a href="#about">关于</a>
+      <a href="https://github.com" target="_blank">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section class="hero">
+  <div class="container">
+    <div class="hero-tag">Open-Source Embedded Studio</div>
+    <h1 class="hero-title">
+      <span class="char-copper">霁</span>泽入微
+    </h1>
+    <p class="hero-sub">
+      大学生独立维护的个人开源嵌入式工作室，专注于<em>电子设计竞赛</em>、嵌入式系统与实用硬件模块。从想法到成品，记录完整开发过程。
+    </p>
+    <div class="hero-cta-group">
+      <a href="#projects" class="btn btn-primary">浏览项目 →</a>
+      <a href="https://github.com" target="_blank" class="btn btn-outline">GitHub 仓库</a>
+    </div>
+  </div>
+
+  <!-- decorative circuit SVG -->
+  <div class="hero-circuit">
+    <svg viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="100" cy="100" r="4" fill="#c8956c" opacity="0.6"/>
+      <circle cx="100" cy="100" r="30" stroke="#c8956c" stroke-opacity="0.15" stroke-width="0.5" fill="none"/>
+      <circle cx="100" cy="100" r="60" stroke="#c8956c" stroke-opacity="0.08" stroke-width="0.5" fill="none" stroke-dasharray="4 6"/>
+      <line x1="100" y1="4" x2="100" y2="70" stroke="#c8956c" stroke-opacity="0.1" stroke-width="0.5"/>
+      <line x1="130" y1="100" x2="196" y2="100" stroke="#c8956c" stroke-opacity="0.1" stroke-width="0.5"/>
+      <circle cx="100" cy="4" r="2" fill="#c8956c" opacity="0.3"/>
+      <circle cx="196" cy="100" r="2" fill="#c8956c" opacity="0.3"/>
+      <rect x="75" y="75" width="50" height="50" stroke="#c8956c" stroke-opacity="0.12" stroke-width="0.5" fill="none" rx="2"/>
+    </svg>
+  </div>
+
+  <div class="scroll-hint">
+    <span>Scroll</span>
+    <div class="scroll-line"></div>
+  </div>
+</section>
+
+<!-- ── STATS ── -->
+<div class="container">
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value">12+</div>
+      <div class="stat-label">开源项目</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">3</div>
+      <div class="stat-label">国赛获奖</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">5k+</div>
+      <div class="stat-label">代码提交</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value">∞</div>
+      <div class="stat-label">持续迭代</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROJECTS ── -->
+<div class="container" id="projects">
+  <div class="section-divider">
+    <span class="section-num">01</span>
+  </div>
+  <div class="section-header">
+    <h2>开源项目</h2>
+    <p>从竞赛实战中沉淀，整理为可复现、可修改、可继续发展的开源工程。</p>
+  </div>
+  <div class="projects-grid">
+    <div class="project-card">
+      <div class="project-type">Hardware Module</div>
+      <h3>多通道精密采集板</h3>
+      <p>基于 STM32H7 的高精度多通道模拟采集模块，支持 24-bit ADC，适用于传感器信号调理与工业测量场景。</p>
+      <div class="project-tags">
+        <span>STM32H7</span><span>ADC</span><span>PCB</span><span>Altium</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 234</span>
+        <span>Fork 56</span>
+        <span>2024.11</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-type">Competition</div>
+      <h3>智能送药小车系统</h3>
+      <p>全国大学生电子设计竞赛获奖作品。基于视觉识别与路径规划的自主导航送药系统，含完整硬件设计与控制算法。</p>
+      <div class="project-tags">
+        <span>OpenMV</span><span>FreeRTOS</span><span>PID</span><span>国赛</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 489</span>
+        <span>Fork 128</span>
+        <span>2024.08</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-type">Tool & Library</div>
+      <h3>JZ-RTOS 调试框架</h3>
+      <p>轻量级嵌入式实时系统调试工具，支持 Trace 可视化、栈使用分析与运行时统计，适配主流 RTOS 平台。</p>
+      <div class="project-tags">
+        <span>调试</span><span>Trace</span><span>RTOS</span><span>CLI</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 167</span>
+        <span>Fork 34</span>
+        <span>2024.05</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-type">Reference Design</div>
+      <h3>电源模块设计集</h3>
+      <p>涵盖 LDO、Buck、Boost、充电管理等常用电源拓扑的参考设计，每款均经过打样验证与效率测试。</p>
+      <div class="project-tags">
+        <span>电源</span><span>DCDC</span><span>充电</span><span>效率</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 312</span>
+        <span>Fork 89</span>
+        <span>2024.03</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-type">Firmware</div>
+      <h3>通用 Bootloader 方案</h3>
+      <p>支持 UART / CAN / USB 多种接口的固件升级方案，含加密签名、断点续传与回滚保护机制。</p>
+      <div class="project-tags">
+        <span>OTA</span><span>CAN</span><span>加密</span><span>STM32</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 198</span>
+        <span>Fork 67</span>
+        <span>2024.01</span>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="project-type">Documentation</div>
+      <h3>从零学嵌入式路线</h3>
+      <p>面向新手的嵌入式系统学习路线文档，涵盖电路基础、C 语言、单片机、RTOS 到 Linux 驱动的完整路径。</p>
+      <div class="project-tags">
+        <span>教程</span><span>新手</span><span>路线图</span><span>文档</span>
+      </div>
+      <div class="project-meta">
+        <span>★ 1.2k</span>
+        <span>Fork 340</span>
+        <span>2023.09</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MARQUEE ── -->
+<div class="marquee-section">
+  <div class="marquee-track">
+    <span class="marquee-item">STM32</span>
+    <span class="marquee-item">ESP32</span>
+    <span class="marquee-item">FreeRTOS</span>
+    <span class="marquee-item">Altium Designer</span>
+    <span class="marquee-item">KiCad</span>
+    <span class="marquee-item">C/C++</span>
+    <span class="marquee-item">Python</span>
+    <span class="marquee-item">MATLAB</span>
+    <span class="marquee-item">Git</span>
+    <span class="marquee-item">CAN Bus</span>
+    <span class="marquee-item">I²C / SPI</span>
+    <span class="marquee-item">OpenOCD</span>
+    <span class="marquee-item">STM32CubeMX</span>
+    <span class="marquee-item">LVGL</span>
+    <span class="marquee-item">Logic Analyzer</span>
+    <span class="marquee-item">Oscilloscope</span>
+    <!-- duplicate for seamless loop -->
+    <span class="marquee-item">STM32</span>
+    <span class="marquee-item">ESP32</span>
+    <span class="marquee-item">FreeRTOS</span>
+    <span class="marquee-item">Altium Designer</span>
+    <span class="marquee-item">KiCad</span>
+    <span class="marquee-item">C/C++</span>
+    <span class="marquee-item">Python</span>
+    <span class="marquee-item">MATLAB</span>
+    <span class="marquee-item">Git</span>
+    <span class="marquee-item">CAN Bus</span>
+    <span class="marquee-item">I²C / SPI</span>
+    <span class="marquee-item">OpenOCD</span>
+    <span class="marquee-item">STM32CubeMX</span>
+    <span class="marquee-item">LVGL</span>
+    <span class="marquee-item">Logic Analyzer</span>
+    <span class="marquee-item">Oscilloscope</span>
+  </div>
+</div>
+
+<!-- ── PROCESS ── -->
+<div class="container" id="process">
+  <div class="section-divider">
+    <span class="section-num">02</span>
+  </div>
+  <div class="section-header">
+    <h2>开发流程</h2>
+    <p>每个项目都经历完整的工程化流程，确保可复现性。</p>
+  </div>
+  <div class="process-grid">
+    <div class="process-step">
+      <div class="step-num">01</div>
+      <div class="step-title">需求与构想</div>
+      <div class="step-desc">明确功能需求、性能指标与约束条件，形成设计文档与初步架构方案。</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">02</div>
+      <div class="step-title">原理图与 PCB</div>
+      <div class="step-desc">完成电路设计、仿真验证与 PCB 布局布线，输出可直接投板的制造文件。</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">03</div>
+      <div class="step-title">打样与调试</div>
+      <div class="step-desc">焊接样板，逐模块调试验证，使用示波器与逻辑分析仪定位问题并迭代。</div>
+    </div>
+    <div class="process-step">
+      <div class="step-num">04</div>
+      <div class="step-title">开源与文档</div>
+      <div class="step-desc">整理代码、原理图、BOM 与使用说明，发布至 GitHub，欢迎复现和改进。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ABOUT ── -->
+<div class="container" id="about">
+  <div class="section-divider">
+    <span class="section-num">03</span>
+  </div>
+  <div class="about-section">
+    <div class="about-text">
+      <h2>从想法到实物，<br>每一个细节都值得被记录。</h2>
+      <p>
+        霁泽入微是一个由大学生独立维护的个人开源嵌入式工作室。名字取自「雨过天晴，润泽万物，细致入微」——我们相信好的工程如同雨后初霁，需经反复打磨，方能从细微处见真章。
+      </p>
+      <p>
+        这里记录的不只是成品，更是<em>从想法、设计、打样、调试到成品</em>的完整过程。我们尽可能把比赛成果整理成能够<em>复现、修改和继续发展</em>的开源项目，让每一个对嵌入式感兴趣的人都能从中受益。
+      </p>
+      <div class="about-quote">
+        <blockquote>
+          「开源不是终点，而是让更多人站在同一起跑线上的方式。」
+        </blockquote>
+        <cite>— 霁泽入微 · 工作室理念</cite>
+      </div>
+    </div>
+    <div class="about-values">
+      <div class="value-item">
+        <h4>开源优先</h4>
+        <p>所有项目遵循开源协议，代码、硬件设计与文档全部公开。学习、修改、商用，皆可自由使用。</p>
+      </div>
+      <div class="value-item">
+        <h4>完整记录</h4>
+        <p>不只展示最终成果，而是完整记录开发过程中的思考、踩坑与解决方案，让后来者少走弯路。</p>
+      </div>
+      <div class="value-item">
+        <h4>竞赛驱动</h4>
+        <p>以电子设计竞赛为实战场景，在真实需求与时间压力下锻炼工程能力，产出高质量的开源作品。</p>
+      </div>
+      <div class="value-item">
+        <h4>持续迭代</h4>
+        <p>发布不是结束。每个项目都在持续维护中，接受 Issue 反馈，合并社区贡献，不断演进。</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── CTA ── -->
+<div class="container">
+  <section class="cta-section">
+    <h2>一起构建，一起成长</h2>
+    <p>
+      如果你对嵌入式开发感兴趣，<br>欢迎 Star、Fork、提 Issue，或者直接来聊天。
+    </p>
+    <div class="cta-links">
+      <a href="https://github.com" target="_blank" class="btn btn-primary">GitHub →</a>
+      <a href="mailto:hello@jize.studio" class="btn btn-outline">联系我们</a>
+    </div>
+  </section>
+</div>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        © 2024 霁泽入微 · 开源嵌入式工作室 &nbsp;|&nbsp; Built with passion and solder fumes
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com" target="_blank">GitHub</a>
+        <a href="#">Bilibili</a>
+        <a href="#">Blog</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<!-- ── SCROLL ANIMATIONS ── -->
+<script>
+  // Intersection Observer for scroll-triggered reveals
+  const observerOptions = {
+    threshold: 0.15,
+    rootMargin: '0px 0px -40px 0px'
+  };
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach((entry, index) => {
+      if (entry.isIntersecting) {
+        // stagger the animation based on sibling index
+        const siblings = entry.target.parentElement.children;
+        let delay = 0;
+        for (let i = 0; i < siblings.length; i++) {
+          if (siblings[i] === entry.target) {
+            delay = i * 100;
+            break;
+          }
+        }
+        setTimeout(() => {
+          entry.target.classList.add('visible');
+        }, delay);
+        observer.unobserve(entry.target);
+      }
+    });
+  }, observerOptions);
+
+  // Observe project cards
+  document.querySelectorAll('.project-card').forEach(el => observer.observe(el));
+  // Observe process steps
+  document.querySelectorAll('.process-step').forEach(el => observer.observe(el));
+
+  // Navbar background on scroll
+  const nav = document.querySelector('nav');
+  window.addEventListener('scroll', () => {
+    if (window.scrollY > 80) {
+      nav.style.background = 'rgba(10,11,13,0.98)';
+    } else {
+      nav.style.background = 'linear-gradient(180deg,rgba(10,11,13,0.95) 0%,rgba(10,11,13,0) 100%)';
+    }
+  });
+
+  // Smooth scroll for anchor links
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      const target = document.querySelector(a.getAttribute('href'));
+      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+</script>
+
+</body>
+</html>
