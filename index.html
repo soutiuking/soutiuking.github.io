@@ -710,6 +710,8 @@
     text-decoration:none;
     word-break:break-all;
     transition:color 0.3s ease;
+    cursor:text;
+    user-select:all;
   }
   .contact-email:hover{color:var(--copper-bright)}
 
@@ -999,7 +1001,7 @@
     </p>
     <div class="cta-links">
       <a href="https://github.com" target="_blank" rel="noreferrer" class="btn btn-primary" data-github-profile>GitHub →</a>
-      <a href="#contact" class="btn btn-outline">联系我们</a>
+
     </div>
   </section>
 </div>
@@ -1008,20 +1010,16 @@
 <div class="container" id="contact">
   <section class="cta-section">
     <h2>联系我们</h2>
-    <p>点击邮箱即可直接发送邮件，或复制地址后联系：</p>
+    <p>复制以下邮箱地址即可联系：</p>
     <div class="contact-grid">
       <div class="contact-card">
         <div class="contact-label">Email 01</div>
-        <a href="mailto:czb36115@163.com" class="contact-email">czb36115@163.com</a>
+        <span class="contact-email">czb36115@163.com</span>
       </div>
       <div class="contact-card">
         <div class="contact-label">Email 02</div>
-        <a href="mailto:czb00382024@163.com" class="contact-email">czb00382024@163.com</a>
+        <span class="contact-email">czb00382024@163.com</span>
       </div>
-    </div>
-    <div class="cta-links">
-      <a href="mailto:czb36115@163.com" class="btn btn-primary">发送邮件 01</a>
-      <a href="mailto:czb00382024@163.com" class="btn btn-outline">发送邮件 02</a>
     </div>
   </section>
 </div>
